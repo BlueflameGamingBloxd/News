@@ -2,13 +2,41 @@
 <html>
   <head>
     <title>News</title>
-    <script src="/main/scripts/eDw2aC.chunk.js"></script>
   </head>
   <body>
     <div style="background:lightgray;color:black;font-weight:200">
-      <div style="display:block;align:center">
+      <div style="display:block;text-align:center">
         <h1>Welcome to News</h1>
       </div>
     </div>
+    
+    <div id="content"></div>
+    
+    <script>
+      // Put your fetch code directly here for now
+      fetch('data.json')
+        .then(response => response.json())
+        .then(data => {
+          const latestPostId = data.latest_post;
+          const post = data[latestPostId];
+          const lines = post.contents.lines;
+          
+          let html = '<div style="padding:20px;">';
+          lines.forEach(line => {
+            if (line.startsWith('## ')) {
+              html += `<h2>${line.substring(3)}</h2>`;
+            } else {
+              html += `<p>${line}</p>`;
+            }
+          });
+          html += '</div>';
+          
+          document.getElementById('content').innerHTML = html;
+        })
+        .catch(error => {
+          document.getElementById('content').innerHTML = '<p>Error loading news</p>';
+          console.error(error);
+        });
+    </script>
   </body>
 </html>

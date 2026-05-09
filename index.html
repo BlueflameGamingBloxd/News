@@ -163,23 +163,23 @@
   </head>
   <body>
     <div class="header">
-      <h1>📰 News Site</h1>
+      <h1>News Site</h1>
       <p>Share your news with the world</p>
     </div>
 
     <div class="container">
       <!-- Create Post Form -->
       <div class="post-form">
-        <h2>➕ Create New Post</h2>
+        <h2>Create New Post</h2>
         <input type="text" id="title" placeholder="Post Title" maxlength="100">
         <textarea id="content" placeholder="Write your news content here..."></textarea>
-        <button onclick="createPost()">📤 Publish Post</button>
+        <button onclick="createPost()">Publish Post</button>
         <div id="status" class="status"></div>
       </div>
 
       <!-- News List -->
       <div class="news-list">
-        <h2>📰 Latest News</h2>
+        <h2>Latest News</h2>
         <div id="newsContainer" class="loading">Loading posts...</div>
       </div>
     </div>
@@ -193,7 +193,7 @@
       // Load posts when page loads
       async function loadPosts() {
         const container = document.getElementById('newsContainer');
-        container.innerHTML = '<div class="loading">📡 Loading posts...</div>';
+        container.innerHTML = '<div class="loading">Loading posts...</div>';
         
         try {
           const response = await fetch(API_URL);
@@ -215,8 +215,8 @@
             const date = new Date(post.created_at).toLocaleString();
             html += `
               <div class="news-item">
-                <h3>📌 ${escapeHtml(post.title)}</h3>
-                <div class="date">📅 ${date}</div>
+                <h3>${escapeHtml(post.title)}</h3>
+                <div class="date">${date}</div>
                 <div class="content">${escapeHtml(post.content).replace(/\n/g, '<br>')}</div>
               </div>
             `;
@@ -225,7 +225,7 @@
           
         } catch (error) {
           console.error('Load error:', error);
-          container.innerHTML = `<div class="empty">❌ Failed to load posts: ${error.message}</div>`;
+          container.innerHTML = `<div class="empty">Failed to load posts: ${error.message}</div>`;
         }
       }
 
@@ -237,11 +237,11 @@
         
         // Validate
         if (!title || !content) {
-          showStatus('⚠️ Please fill in both title and content', 'error');
+          showStatus('Please fill in both title and content', 'error');
           return;
         }
         
-        showStatus('📤 Publishing...', 'loading');
+        showStatus('Publishing...', 'loading');
         
         try {
           const response = await fetch(API_URL, {
@@ -259,7 +259,7 @@
           }
           
           // Success
-          showStatus('✅ Post published successfully!', 'success');
+          showStatus('Post published successfully!', 'success');
           
           // Clear form
           document.getElementById('title').value = '';
@@ -277,7 +277,7 @@
           
         } catch (error) {
           console.error('Create error:', error);
-          showStatus(`❌ Failed to publish: ${error.message}`, 'error');
+          showStatus(`Failed to publish: ${error.message}`, 'error');
         }
       }
 

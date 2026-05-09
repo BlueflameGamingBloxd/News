@@ -1,42 +1,315 @@
 <!doctype html>
 <html>
   <head>
-    <title>News</title>
+    <title>News Site</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+        background: #f0f2f5;
+        color: #1a1a1a;
+      }
+
+      /* Header */
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px 20px;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      /* Container */
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      /* Form */
+      .post-form {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+
+      .post-form h2 {
+        margin-bottom: 15px;
+        color: #667eea;
+        font-size: 1.3rem;
+      }
+
+      .post-form input,
+      .post-form textarea {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        font-family: inherit;
+      }
+
+      .post-form textarea {
+        resize: vertical;
+        min-height: 100px;
+      }
+
+      .post-form button {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        transition: background 0.3s;
+      }
+
+      .post-form button:hover {
+        background: #5a67d8;
+      }
+
+      /* Status messages */
+      .status {
+        margin-top: 15px;
+        padding: 10px;
+        border-radius: 8px;
+        display: none;
+      }
+
+      .status.success {
+        background: #d4edda;
+        color: #155724;
+        display: block;
+      }
+
+      .status.error {
+        background: #f8d7da;
+        color: #721c24;
+        display: block;
+      }
+
+      .status.loading {
+        background: #cce5ff;
+        color: #004085;
+        display: block;
+      }
+
+      /* News List */
+      .news-list {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+      }
+
+      .news-list h2 {
+        margin-bottom: 20px;
+        color: #667eea;
+        font-size: 1.3rem;
+      }
+
+      .news-item {
+        border-bottom: 1px solid #eee;
+        padding: 20px 0;
+      }
+
+      .news-item:last-child {
+        border-bottom: none;
+      }
+
+      .news-item h3 {
+        color: #1a1a1a;
+        margin-bottom: 8px;
+        font-size: 1.2rem;
+      }
+
+      .news-item .date {
+        color: #999;
+        font-size: 0.8rem;
+        margin-bottom: 12px;
+      }
+
+      .news-item .content {
+        color: #4a4a4a;
+        line-height: 1.6;
+      }
+
+      .loading, .empty {
+        text-align: center;
+        padding: 40px;
+        color: #999;
+      }
+    </style>
   </head>
   <body>
-    <div style="background:lightgray;color:black;font-weight:200">
-      <div style="display:block;text-align:center">
-        <h1>Welcome to News</h1>
+    <div class="header">
+      <h1>📰 News Site</h1>
+      <p>Share your news with the world</p>
+    </div>
+
+    <div class="container">
+      <!-- Create Post Form -->
+      <div class="post-form">
+        <h2>➕ Create New Post</h2>
+        <input type="text" id="title" placeholder="Post Title" maxlength="100">
+        <textarea id="content" placeholder="Write your news content here..."></textarea>
+        <button onclick="createPost()">📤 Publish Post</button>
+        <div id="status" class="status"></div>
+      </div>
+
+      <!-- News List -->
+      <div class="news-list">
+        <h2>📰 Latest News</h2>
+        <div id="newsContainer" class="loading">Loading posts...</div>
       </div>
     </div>
-    
-    <div id="content"></div>
-    
+
     <script>
-      // Put your fetch code directly here for now
-      fetch('data.json')
-        .then(response => response.json())
-        .then(data => {
-          const latestPostId = data.latest_post;
-          const post = data[latestPostId];
-          const lines = post.contents.lines;
+      // ============================================
+      // REPLACE THIS WITH YOUR CLOUDFLARE WORKER URL
+      // ============================================
+      const API_URL = 'https://lingering-star-f0ab.yayihaveaytchannel.workers.dev/api/posts';
+
+      // Load posts when page loads
+      async function loadPosts() {
+        const container = document.getElementById('newsContainer');
+        container.innerHTML = '<div class="loading">📡 Loading posts...</div>';
+        
+        try {
+          const response = await fetch(API_URL);
           
-          let html = '<div style="padding:20px;">';
-          lines.forEach(line => {
-            if (line.startsWith('## ')) {
-              html += `<h2>${line.substring(3)}</h2>`;
-            } else {
-              html += `<p>${line}</p>`;
-            }
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          
+          const posts = await response.json();
+          
+          if (posts.length === 0) {
+            container.innerHTML = '<div class="empty">✨ No posts yet. Be the first to create one!</div>';
+            return;
+          }
+          
+          // Build HTML for all posts
+          let html = '';
+          posts.forEach(post => {
+            const date = new Date(post.created_at).toLocaleString();
+            html += `
+              <div class="news-item">
+                <h3>📌 ${escapeHtml(post.title)}</h3>
+                <div class="date">📅 ${date}</div>
+                <div class="content">${escapeHtml(post.content).replace(/\n/g, '<br>')}</div>
+              </div>
+            `;
           });
-          html += '</div>';
+          container.innerHTML = html;
           
-          document.getElementById('content').innerHTML = html;
-        })
-        .catch(error => {
-          document.getElementById('content').innerHTML = '<p>Error loading news</p>';
-          console.error(error);
-        });
+        } catch (error) {
+          console.error('Load error:', error);
+          container.innerHTML = `<div class="empty">❌ Failed to load posts: ${error.message}</div>`;
+        }
+      }
+
+      // Create a new post
+      async function createPost() {
+        const title = document.getElementById('title').value.trim();
+        const content = document.getElementById('content').value.trim();
+        const statusDiv = document.getElementById('status');
+        
+        // Validate
+        if (!title || !content) {
+          showStatus('⚠️ Please fill in both title and content', 'error');
+          return;
+        }
+        
+        showStatus('📤 Publishing...', 'loading');
+        
+        try {
+          const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ title, content })
+          });
+          
+          const result = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(result.error || 'Failed to publish');
+          }
+          
+          // Success
+          showStatus('✅ Post published successfully!', 'success');
+          
+          // Clear form
+          document.getElementById('title').value = '';
+          document.getElementById('content').value = '';
+          
+          // Reload posts
+          loadPosts();
+          
+          // Clear status after 3 seconds
+          setTimeout(() => {
+            const statusDivLocal = document.getElementById('status');
+            statusDivLocal.className = 'status';
+            statusDivLocal.style.display = 'none';
+          }, 3000);
+          
+        } catch (error) {
+          console.error('Create error:', error);
+          showStatus(`❌ Failed to publish: ${error.message}`, 'error');
+        }
+      }
+
+      function showStatus(message, type) {
+        const statusDiv = document.getElementById('status');
+        statusDiv.textContent = message;
+        statusDiv.className = 'status';
+        
+        if (type === 'error') {
+          statusDiv.style.background = '#f8d7da';
+          statusDiv.style.color = '#721c24';
+        } else if (type === 'success') {
+          statusDiv.style.background = '#d4edda';
+          statusDiv.style.color = '#155724';
+        } else {
+          statusDiv.style.background = '#cce5ff';
+          statusDiv.style.color = '#004085';
+        }
+        
+        statusDiv.style.display = 'block';
+      }
+
+      // Helper to prevent XSS attacks
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Load posts when page loads
+      loadPosts();
     </script>
   </body>
 </html>
